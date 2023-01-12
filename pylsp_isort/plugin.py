@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, Generator, TypedDict
 
@@ -26,8 +27,6 @@ def pylsp_settings() -> Dict[str, Any]:
         "plugins": {
             "isort": {
                 "enabled": True,
-                "profile": None,
-                "line_length": 79,
             },
         },
     }
@@ -65,6 +64,7 @@ def _process(outcome, config: Config, document: Document, range: Range):
     for key, value in settings.items():
         if key in defined_args:
             config_kwargs[key] = value
+    config_kwargs["settings_path"] = os.path.dirname(os.path.abspath(document.path))
     logger.debug("config_kwargs=%r", config_kwargs)
 
     new_text = isort.code(
