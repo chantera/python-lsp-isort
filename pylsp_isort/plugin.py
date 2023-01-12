@@ -1,103 +1,76 @@
 import logging
+from pathlib import Path
+from typing import Any, Dict, Generator, TypedDict
 
-from pylsp import hookimpl, uris
-
+import isort
+from pylsp import hookimpl
+from pylsp.config.config import Config
+from pylsp.workspace import Document
 
 logger = logging.getLogger(__name__)
 
 
-@hookimpl
-def pylsp_settings():
-    logger.info("Initializing pylsp_isort")
+class Position(TypedDict):
+    line: int
+    character: int
 
-    # Disable default plugins that conflicts with our plugin
+
+class Range(TypedDict):
+    start: Position
+    end: Position
+
+
+@hookimpl
+def pylsp_settings() -> Dict[str, Any]:
     return {
         "plugins": {
-            # "autopep8_format": {"enabled": False},
-            # "definition": {"enabled": False},
-            # "flake8_lint": {"enabled": False},
-            # "folding": {"enabled": False},
-            # "highlight": {"enabled": False},
-            # "hover": {"enabled": False},
-            # "jedi_completion": {"enabled": False},
-            # "jedi_rename": {"enabled": False},
-            # "mccabe_lint": {"enabled": False},
-            # "preload_imports": {"enabled": False},
-            # "pycodestyle_lint": {"enabled": False},
-            # "pydocstyle_lint": {"enabled": False},
-            # "pyflakes_lint": {"enabled": False},
-            # "pylint_lint": {"enabled": False},
-            # "references": {"enabled": False},
-            # "rope_completion": {"enabled": False},
-            # "rope_rename": {"enabled": False},
-            # "signature": {"enabled": False},
-            # "symbols": {"enabled": False},
-            # "yapf_format": {"enabled": False},
+            "isort": {
+                "enabled": True,
+                "profile": None,
+                "line_length": 79,
+            },
         },
     }
 
 
-@hookimpl
-def pylsp_code_actions(config, workspace, document, range, context):
-    logger.info("textDocument/codeAction: %s %s %s", document, range, context)
-
-    return [
-        {
-            "title": "Extract method",
-            "kind": "refactor.extract",
-            "command": {
-                "command": "example.refactor.extract",
-                "arguments": [document.uri, range],
-            },
-        },
-    ]
+@hookimpl(hookwrapper=True)
+def pylsp_format_document(config: Config, document: Document) -> Generator:
+    range = Range(
+        start={"line": 0, "character": 0},
+        end={"line": len(document.lines), "character": 0},
+    )
+    outcome = yield
+    _process(outcome, config, document, range)
 
 
-@hookimpl
-def pylsp_execute_command(config, workspace, command, arguments):
-    logger.info("workspace/executeCommand: %s %s", command, arguments)
-
-    if command == "example.refactor.extract":
-        current_document, range = arguments
-
-        workspace_edit = {
-            "changes": {
-                current_document: [
-                    {
-                        "range": range,
-                        "newText": "replacement text",
-                    },
-                ]
-            }
-        }
-
-        logger.info("applying workspace edit: %s %s", command, workspace_edit)
-        workspace.apply_edit(workspace_edit)
+@hookimpl(hookwrapper=True)
+def pylsp_format_range(config: Config, document: Document, range: Range) -> Generator:
+    outcome = yield
+    _process(outcome, config, document, range)
 
 
-@hookimpl
-def pylsp_definitions(config, workspace, document, position):
-    logger.info("textDocument/definition: %s %s", document, position)
+def _process(outcome, config: Config, document: Document, range: Range):
+    result = outcome.get_result()
+    if result:
+        text = result[0]["newText"]
+        range = result[0]["range"]
+    else:
+        start = range["start"]["line"]
+        end = range["end"]["line"]
+        text = "".join(document.lines[start:end])
 
-    filename = __file__
-    uri = uris.uri_with(document.uri, path=filename)
-    with open(filename) as f:
-        lines = f.readlines()
-        for lineno, line in enumerate(lines):
-            if "def pylsp_definitions" in line:
-                break
-    return [
-        {
-            "uri": uri,
-            "range": {
-                "start": {
-                    "line": lineno,
-                    "character": 4,
-                },
-                "end": {
-                    "line": lineno,
-                    "character": line.find(")") + 1,
-                },
-            }
-        }
-    ]
+    config_kwargs = {}
+    defined_args = set(getattr(isort.Config, "__dataclass_fields__", {}).keys())
+    settings = config.plugin_settings("isort", document_path=document.path)
+    for key, value in settings.items():
+        if key in defined_args:
+            config_kwargs[key] = value
+    logger.debug("config_kwargs=%r", config_kwargs)
+
+    new_text = isort.code(
+        text, config=isort.Config(**config_kwargs), file_path=Path(document.path)
+    )
+
+    if new_text != text:
+        result = [{"range": range, "newText": new_text}]
+        outcome.force_result(result)
