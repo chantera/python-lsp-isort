@@ -56,7 +56,9 @@ def _format(outcome, config: Config, document: Document, range: Range) -> None:
     else:
         text = "".join(document.lines[range["start"]["line"] : range["end"]["line"]])
 
+    IGNORE_KEYS = {"enabled"}
     settings = config.plugin_settings("isort", document_path=document.path)
+    settings = {k: v for k, v in settings.items() if k not in IGNORE_KEYS}
     new_text = run_isort(text, settings, file_path=document.path)
 
     if new_text != text:
