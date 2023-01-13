@@ -34,12 +34,8 @@ def pylsp_settings() -> Dict[str, Any]:
 
 @hookimpl(hookwrapper=True)
 def pylsp_format_document(config: Config, document: Document) -> Generator:
-    range = Range(
-        start={"line": 0, "character": 0},
-        end={"line": len(document.lines), "character": 0},
-    )
     outcome = yield
-    _format(outcome, config, document, range)
+    _format(outcome, config, document)
 
 
 @hookimpl(hookwrapper=True)
@@ -48,13 +44,21 @@ def pylsp_format_range(config: Config, document: Document, range: Range) -> Gene
     _format(outcome, config, document, range)
 
 
-def _format(outcome, config: Config, document: Document, range: Range) -> None:
+def _format(
+    outcome, config: Config, document: Document, range: Optional[Range] = None
+) -> None:
     result = outcome.get_result()
     if result:
         text = result[0]["newText"]
         range = result[0]["range"]
-    else:
+    elif range:
         text = "".join(document.lines[range["start"]["line"] : range["end"]["line"]])
+    else:
+        text = document.source
+        range = Range(
+            start={"line": 0, "character": 0},
+            end={"line": len(document.lines), "character": 0},
+        )
 
     IGNORE_KEYS = {"enabled"}
     settings = config.plugin_settings("isort", document_path=document.path)
