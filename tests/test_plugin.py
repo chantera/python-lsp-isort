@@ -78,6 +78,16 @@ def test_isort_config(settings, target_path, expected, check_sources):
     assert actual_dict == expected_dict
 
 
+def test_pylsp_settings(config):
+    plugins = dict(config.plugin_manager.list_name_plugin())
+    assert "isort" in plugins
+    assert plugins["isort"] not in config.disabled_plugins
+    config.update({"plugins": {"isort": {"enabled": False}}})
+    assert plugins["isort"] in config.disabled_plugins
+    config.update(plugin.pylsp_settings())
+    assert plugins["isort"] not in config.disabled_plugins
+
+
 def test_pylsp_format_document(config, unformatted_document, formatted_document):
     actual = _receive(plugin.pylsp_format_document, config, unformatted_document)
 

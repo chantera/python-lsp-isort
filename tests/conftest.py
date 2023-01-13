@@ -13,15 +13,7 @@ fixtures_dir = here / "fixtures"
 
 @pytest.fixture
 def config(workspace):
-    cfg = Config(workspace.root_uri, {}, 0, {})
-    cfg._plugin_settings = {
-        "plugins": {
-            "isort": {
-                "enabled": True,
-            },
-        },
-    }
-    return cfg
+    return Config(workspace.root_uri, {}, 0, {})
 
 
 @pytest.fixture
