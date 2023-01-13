@@ -5,8 +5,7 @@ from unittest.mock import Mock
 import pytest
 from pylsp import uris
 from pylsp.config.config import Config
-from pylsp.workspace import Workspace, Document
-
+from pylsp.workspace import Document, Workspace
 
 here = Path(__file__).parent
 fixtures_dir = here / "fixtures"
@@ -14,14 +13,11 @@ fixtures_dir = here / "fixtures"
 
 @pytest.fixture
 def config(workspace):
-    """Return a config object."""
     cfg = Config(workspace.root_uri, {}, 0, {})
     cfg._plugin_settings = {
         "plugins": {
-            "pylint": {
-                "enabled": False,
-                "args": [],
-                "executable": None,
+            "isort": {
+                "enabled": True,
             },
         },
     }
@@ -37,29 +33,13 @@ def workspace(tmpdir):
 
 
 @pytest.fixture
-def document(workspace):
-    return create_document(workspace, "simple.py")
+def unformatted_document(workspace):
+    return create_document(workspace, "unformatted.py")
 
 
 @pytest.fixture
-def code_action_context():
-    # https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#codeActionKind
-    code_action_kind = [
-        "",
-        "quickfix",
-        "refactor",
-        "refactor.extract",
-        "refactor.inline",
-        "refactor.rewrite",
-        "source",
-        "source.organizeImports",
-        "source.fixAll",
-    ]
-
-    return {
-        "diagnostics": [],
-        "only": code_action_kind,
-    }
+def formatted_document(workspace):
+    return create_document(workspace, "formatted.py")
 
 
 def create_document(workspace, name):

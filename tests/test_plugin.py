@@ -1,96 +1,134 @@
-from unittest.mock import ANY
+import os
+from dataclasses import asdict
+
+import isort
+import pytest
 
 from pylsp_isort import plugin
-from test.conftest import *
 
 
-def test_definitions(config, workspace, document):
-    position = {"line": 3, "character": 6}
+def _read_content(filename):
+    path = os.path.join(os.path.dirname(__file__), "fixtures", filename)
+    with open(path) as f:
+        return f.read()
 
-    response = plugin.pylsp_definitions(
-        config=config,
-        workspace=workspace,
-        document=document,
-        position=position,
+
+@pytest.mark.parametrize(
+    ("text", "settings", "expected"),
+    [
+        (
+            _read_content("unformatted.py"),
+            {},
+            _read_content("formatted.py"),
+        ),
+        (
+            _read_content("unformatted.py"),
+            {"profile": "black"},
+            _read_content("formatted_black.py"),
+        ),
+    ],
+)
+def test_run_isort(text, settings, expected):
+    actual = plugin.run_isort(text, settings)
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("settings", "target_path", "expected", "check_sources"),
+    [
+        (
+            {},
+            None,
+            isort.Config(),
+            True,
+        ),
+        (
+            {"profile": "black"},
+            None,
+            isort.Config(profile="black"),
+            True,
+        ),
+        (
+            {"profile": "black", "line_length": 120},
+            None,
+            isort.Config(profile="black", line_length=120),
+            True,
+        ),
+        (
+            {},
+            __file__,
+            isort.Config(settings_path=os.path.dirname(__file__)),
+            True,
+        ),
+        (
+            {},
+            __file__,
+            isort.Config(profile="black"),
+            False,
+        ),
+    ],
+)
+def test_isort_config(settings, target_path, expected, check_sources):
+    actual = plugin.isort_config(settings, target_path)
+    actual_dict = asdict(actual)
+    expected_dict = asdict(expected)
+    if not check_sources:
+        del actual_dict["sources"]
+        del expected_dict["sources"]
+    assert actual_dict == expected_dict
+
+
+def test_pylsp_format_document(config, unformatted_document, formatted_document):
+    actual = _receive(plugin.pylsp_format_document, config, unformatted_document)
+
+    text = _read_content(formatted_document.path)
+    range = plugin.Range(
+        start={"line": 0, "character": 0},
+        end={"line": len(unformatted_document.lines), "character": 0},
     )
+    expected = [{"range": range, "newText": text}]
 
-    expected = [
-        {
-            "uri": ANY,
-            "range": {
-                "start": {
-                    "line": ANY,
-                    "character": ANY,
-                },
-                "end": {
-                    "line": ANY,
-                    "character": ANY,
-                },
-            },
-        },
-    ]
-
-    assert response == expected
+    assert actual == expected
 
 
-def test_code_action(config, workspace, document, code_action_context):
-    selection = {
-        "start": {
-            "line": 3,
-            "character": 0,
-        },
-        "end": {
-            "line": 4,
-            "character": 0,
-        },
-    }
-
-    response = plugin.pylsp_code_actions(
-        config=config,
-        workspace=workspace,
-        document=document,
-        range=selection,
-        context=code_action_context,
+def test_pylsp_format_range(config, unformatted_document):
+    range = plugin.Range(
+        start={"line": 2, "character": 0},
+        end={"line": 9, "character": 0},
     )
+    actual = _receive(plugin.pylsp_format_range, config, unformatted_document, range)
 
-    expected = [
-        {
-            "title": "Extract method",
-            "kind": "refactor.extract",
-            "command": {
-                "command": "example.refactor.extract",
-                "arguments": [document.uri, selection],
-            },
-        },
-    ]
-
-    assert response == expected
-
-    command = response[0]["command"]["command"]
-    arguments = response[0]["command"]["arguments"]
-
-    response = plugin.pylsp_execute_command(
-        config=config,
-        workspace=workspace,
-        command=command,
-        arguments=arguments,
+    text = "\n".join(
+        [
+            "import os",
+            "import sys",
+            "",
+            "from pylsp_isort.plugin import Range, pylsp_settings",
+        ]
     )
+    text += "\n"
+    expected = [{"range": range, "newText": text}]
 
-    workspace._endpoint.request.assert_called_once_with(
-        "workspace/applyEdit",
-        {
-            "edit": {
-                "changes": {
-                    document.uri: [
-                        {
-                            "range": {
-                                "start": {"line": 3, "character": 0},
-                                "end": {"line": 4, "character": 0},
-                            },
-                            "newText": "replacement text",
-                        },
-                    ],
-                },
-            },
-        },
-    )
+    assert actual == expected
+
+
+def _receive(func, *args):
+    gen = func(*args)
+    next(gen)
+    outcome = MockResult([])
+    try:
+        gen.send(outcome)
+    except StopIteration:
+        pass
+    return outcome.get_result()
+
+
+class MockResult:
+    def __init__(self, result):
+        self.result = result
+
+    def get_result(self):
+        return self.result
+
+    def force_result(self, result):
+        self.result = result
