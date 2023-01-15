@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-lsp-isort"
+version = "0.1"
+authors = [
+    {name = "Hiroki Teranishi", email = "teranishi.hiroki@gmail.com"}
+]
+description = "isort plugin for the Python LSP Server"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.7"
+dependencies = [
+  "python-lsp-server",
+  "isort>=5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/chantera/python-lsp-isort"
+"Bug Tracker" = "https://github.com/chantera/python-lsp-isort/issues"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.entry-points.pylsp]
+isort = "pylsp_isort.plugin"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = "E203"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
