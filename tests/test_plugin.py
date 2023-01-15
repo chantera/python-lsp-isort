@@ -66,6 +66,12 @@ def test_run_isort(text, settings, expected):
             isort.Config(profile="black"),
             False,
         ),
+        (
+            {"profile": "django"},
+            __file__,
+            isort.Config(profile="black"),
+            False,
+        ),
     ],
 )
 def test_isort_config(settings, target_path, expected, check_sources):

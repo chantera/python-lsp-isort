@@ -103,11 +103,19 @@ def isort_config(
         else:
             config_kwargs["settings_path"] = os.path.abspath(settings["settings_path"])
     elif target_path:
-        config_kwargs["settings_path"] = os.path.abspath(target_path)
-        if not os.path.isdir(config_kwargs["settings_path"]):
-            config_kwargs["settings_path"] = os.path.dirname(
-                config_kwargs["settings_path"]
+        settings_path = os.path.abspath(target_path)
+        if not os.path.isdir(settings_path):
+            settings_path = os.path.dirname(settings_path)
+
+        _, found_settings = isort.settings._find_config(settings_path)
+        if found_settings:
+            logger.info(
+                "Found a config file: `%s`, skipping given settings.",
+                found_settings["source"],
             )
+            config_kwargs = {}
+
+        config_kwargs["settings_path"] = settings_path
 
     logger.debug("config_kwargs=%r", config_kwargs)
     if unsupported_kwargs:

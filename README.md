@@ -18,4 +18,4 @@ These are the valid configuration keys:
 - `pylsp.plugins.isort.enabled`: boolean to enable/disable the plugin. `true` by default.
 - `pylsp.plugins.isort.*`: any other key-value pair under `pylsp.plugins.isort` is passed to `isort.settings.Config`. See the [reference](https://pycqa.github.io/isort/reference/isort/settings.html#config) for details.
 
-Note that any configurations passed to isort via `pylsp` will override the settings in a config file, such as `pyproject.toml`.
+Note that any configurations passed to isort via `pylsp` are ignored when isort detects a config file, such as `pyproject.toml`.
