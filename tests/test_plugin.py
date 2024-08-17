@@ -72,6 +72,20 @@ def test_run_isort(text, settings, expected):
             isort.Config(profile="black"),
             False,
         ),
+        (
+            {
+                "sections": ["FUTURE", "SECTION_A", "SECTION_B"],
+                "known_section_a": ["module_a"],
+                "known_section_b": ["module_b"],
+             },
+            None,
+            isort.Config(
+                sections=["FUTURE", "SECTION_A", "SECTION_B"],
+                known_section_a=["module_a"],
+                known_section_b=["module_b"],
+            ),
+            True,
+        ),
     ],
 )
 def test_isort_config(settings, target_path, expected, check_sources):

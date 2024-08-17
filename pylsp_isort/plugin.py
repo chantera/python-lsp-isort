@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Generator, Optional, TypedDict, Union
 
 import isort
+from isort.settings import KNOWN_PREFIX
 from pylsp import hookimpl
 from pylsp.config.config import Config
 from pylsp.workspace import Document
@@ -89,7 +90,7 @@ def isort_config(
 
     defined_args = set(getattr(isort.Config, "__dataclass_fields__", {}).keys())
     for key, value in settings.items():
-        if key in defined_args:
+        if key in defined_args or key.startswith(KNOWN_PREFIX):
             config_kwargs[key] = value
         else:
             unsupported_kwargs[key] = value
