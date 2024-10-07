@@ -44,9 +44,12 @@ def pylsp_format_document(
 
 
 @hookimpl(hookwrapper=True)
-def pylsp_format_range(config: Config, document: Document, range: Range) -> Generator:
+def pylsp_format_range(
+    config: Config, workspace: Workspace, document: Document, range: Range
+) -> Generator:
     outcome = yield
-    _format(outcome, config, document, range)
+    with workspace.report_progress("format: isort"):
+        _format(outcome, config, document, range)
 
 
 def _format(
