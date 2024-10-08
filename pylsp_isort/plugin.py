@@ -40,7 +40,6 @@ def pylsp_format_document(
     outcome = yield
     with workspace.report_progress("format: isort"):
         _format(outcome, config, document)
-    _format(outcome, config, document)
 
 
 @hookimpl(hookwrapper=True)
