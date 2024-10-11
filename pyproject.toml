@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "python-lsp-isort"
@@ -26,6 +26,13 @@ dev = ["pytest"]
 
 [project.entry-points.pylsp]
 isort = "pylsp_isort.plugin"
+
+[tool.hatch.build]
+exclude = ["/tests"]
+only-packages = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["pylsp_isort"]
 
 [tool.flake8]
 max-line-length = 88
