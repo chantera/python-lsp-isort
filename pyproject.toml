@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-lsp-isort"
-version = "0.1"
+version = "0.2.0"
 authors = [
     {name = "Hiroki Teranishi", email = "teranishi.hiroki@gmail.com"}
 ]
