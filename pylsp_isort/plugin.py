@@ -7,7 +7,7 @@ import isort
 from isort.settings import KNOWN_PREFIX
 from pylsp import hookimpl
 from pylsp.config.config import Config
-from pylsp.workspace import Document
+from pylsp.workspace import Document, Workspace
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +34,21 @@ def pylsp_settings() -> Dict[str, Any]:
 
 
 @hookimpl(hookwrapper=True)
-def pylsp_format_document(config: Config, document: Document) -> Generator:
+def pylsp_format_document(
+    config: Config, workspace: Workspace, document: Document
+) -> Generator:
     outcome = yield
-    _format(outcome, config, document)
+    with workspace.report_progress("format: isort"):
+        _format(outcome, config, document)
 
 
 @hookimpl(hookwrapper=True)
-def pylsp_format_range(config: Config, document: Document, range: Range) -> Generator:
+def pylsp_format_range(
+    config: Config, workspace: Workspace, document: Document, range: Range
+) -> Generator:
     outcome = yield
-    _format(outcome, config, document, range)
+    with workspace.report_progress("format: isort"):
+        _format(outcome, config, document, range)
 
 
 def _format(
