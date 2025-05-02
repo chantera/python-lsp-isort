@@ -34,9 +34,7 @@ def pylsp_settings() -> Dict[str, Any]:
 
 
 @hookimpl(hookwrapper=True)
-def pylsp_format_document(
-    config: Config, workspace: Workspace, document: Document
-) -> Generator:
+def pylsp_format_document(config: Config, workspace: Workspace, document: Document) -> Generator:
     outcome = yield
     with workspace.report_progress("format: isort"):
         _format(outcome, config, document)
@@ -51,9 +49,7 @@ def pylsp_format_range(
         _format(outcome, config, document, range)
 
 
-def _format(
-    outcome, config: Config, document: Document, range: Optional[Range] = None
-) -> None:
+def _format(outcome, config: Config, document: Document, range: Optional[Range] = None) -> None:
     result = outcome.get_result()
     if result:
         text = result[0]["newText"]
@@ -104,9 +100,7 @@ def isort_config(
     if "settings_path" in settings:
         if os.path.isfile(settings["settings_path"]):
             config_kwargs["settings_file"] = os.path.abspath(settings["settings_path"])
-            config_kwargs["settings_path"] = os.path.dirname(
-                config_kwargs["settings_file"]
-            )
+            config_kwargs["settings_path"] = os.path.dirname(config_kwargs["settings_file"])
         else:
             config_kwargs["settings_path"] = os.path.abspath(settings["settings_path"])
     elif target_path:
@@ -114,7 +108,7 @@ def isort_config(
         if not os.path.isdir(settings_path):
             settings_path = os.path.dirname(settings_path)
 
-        _, found_settings = isort.settings._find_config(settings_path)
+        _, found_settings = isort.settings._find_config(str(settings_path))
         if found_settings:
             logger.info(
                 "Found a config file: `%s`, skipping given settings.",
