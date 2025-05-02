@@ -22,11 +22,11 @@ jobs:
         run: |
           python -m hatch version "${GITHUB_REF_NAME}"
           python -m hatch build
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: dist-artifacts
-        path: dist/
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-artifacts
+          path: dist/
 
   publish:
     needs: build
