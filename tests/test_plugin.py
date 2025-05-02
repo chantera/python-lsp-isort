@@ -77,7 +77,7 @@ def test_run_isort(text, settings, expected):
                 "sections": ["FUTURE", "SECTION_A", "SECTION_B"],
                 "known_section_a": ["module_a"],
                 "known_section_b": ["module_b"],
-             },
+            },
             None,
             isort.Config(
                 sections=["FUTURE", "SECTION_A", "SECTION_B"],
@@ -108,12 +108,8 @@ def test_pylsp_settings(config):
     assert plugins["isort"] not in config.disabled_plugins
 
 
-def test_pylsp_format_document(
-    config, workspace, unformatted_document, formatted_document
-):
-    actual = _receive(
-        plugin.pylsp_format_document, config, workspace, unformatted_document
-    )
+def test_pylsp_format_document(config, workspace, unformatted_document, formatted_document):
+    actual = _receive(plugin.pylsp_format_document, config, workspace, unformatted_document)
 
     text = _read_content(formatted_document.path)
     range = plugin.Range(
@@ -130,9 +126,7 @@ def test_pylsp_format_range(config, workspace, unformatted_document):
         start={"line": 2, "character": 0},
         end={"line": 9, "character": 0},
     )
-    actual = _receive(
-        plugin.pylsp_format_range, config, workspace, unformatted_document, range
-    )
+    actual = _receive(plugin.pylsp_format_range, config, workspace, unformatted_document, range)
 
     text = "\n".join(
         [
