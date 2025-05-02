@@ -5,26 +5,21 @@ import isort
 import pytest
 
 from pylsp_isort import plugin
-
-
-def _read_content(filename):
-    path = os.path.join(os.path.dirname(__file__), "fixtures", filename)
-    with open(path) as f:
-        return f.read()
+from tests.utils import project_settings, read_content
 
 
 @pytest.mark.parametrize(
     ("text", "settings", "expected"),
     [
         (
-            _read_content("unformatted.py"),
+            read_content("unformatted.py"),
             {},
-            _read_content("formatted.py"),
+            read_content("formatted.py"),
         ),
         (
-            _read_content("unformatted.py"),
+            read_content("unformatted.py"),
             {"profile": "black"},
-            _read_content("formatted_black.py"),
+            read_content("formatted_black.py"),
         ),
     ],
 )
@@ -63,13 +58,13 @@ def test_run_isort(text, settings, expected):
         (
             {},
             __file__,
-            isort.Config(profile="black"),
+            isort.Config(**project_settings()),
             False,
         ),
         (
             {"profile": "django"},
             __file__,
-            isort.Config(profile="black"),
+            isort.Config(**project_settings()),
             False,
         ),
         (
@@ -111,7 +106,7 @@ def test_pylsp_settings(config):
 def test_pylsp_format_document(config, workspace, unformatted_document, formatted_document):
     actual = _receive(plugin.pylsp_format_document, config, workspace, unformatted_document)
 
-    text = _read_content(formatted_document.path)
+    text = read_content(formatted_document.path)
     range = plugin.Range(
         start={"line": 0, "character": 0},
         end={"line": len(unformatted_document.lines), "character": 0},
