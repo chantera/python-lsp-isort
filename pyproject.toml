@@ -4,7 +4,6 @@ build-backend = "hatchling.build"
 
 [project]
 name = "python-lsp-isort"
-version = "0.2.0"
 authors = [
     {name = "Hiroki Teranishi", email = "teranishi.hiroki@gmail.com"}
 ]
@@ -16,6 +15,7 @@ dependencies = [
     "python-lsp-server",
     "isort>=5.0",
 ]
+dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/chantera/python-lsp-isort"
@@ -38,6 +38,9 @@ only-packages = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["pylsp_isort"]
+
+[tool.hatch.version]
+path = "pylsp_isort/_version.py"
 
 [tool.ruff]
 line-length = 99
